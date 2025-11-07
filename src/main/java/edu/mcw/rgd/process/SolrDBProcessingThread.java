@@ -17,8 +17,9 @@ public class SolrDBProcessingThread implements Runnable{
     public void run() {
         SolrDocsDAO solrDocsDAO=new SolrDocsDAO();
         try {
-           int chunkedDataCount= solrDocsDAO.addBatch(solrDocs);
-           chunkDataCounts.add(chunkedDataCount);
+//           int chunkedDataCount= solrDocsDAO.addBatch(solrDocs);
+//           chunkDataCounts.add(chunkedDataCount);
+            System.out.println("solrDocs Size:"+ solrDocs.size());
         }catch (Exception e){
             e.printStackTrace();
         }
