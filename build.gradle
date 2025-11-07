@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'edu.mcw.rgd'
+version = '1.0.0'
+sourceCompatibility = '11'
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://apps.rnd.mcw.edu/maven-releases/'
+    }
+}
+
+dependencies {
+    // RGD Core Library
+    implementation fileTree(dir: 'lib', include: '*.jar')
+
+    // Jackson for JSON processing
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.15.2'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.15.2'
+
+    // Gson
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Logging
+    implementation 'log4j:log4j:1.2.17'
+    implementation 'org.slf4j:slf4j-api:1.7.36'
+    implementation 'org.slf4j:slf4j-log4j12:1.7.36'
+
+    // Database
+    implementation 'org.postgresql:postgresql:42.6.0'
+
+    // Apache Commons
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'commons-cli:commons-cli:1.5.0'
+
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+
+    //Spring
+    implementation group: 'org.springframework', name: 'spring-jdbc', version: '5.3.39'
+}
+
+application {
+    mainClass = 'edu.mcw.rgd.pipeline.solr.SolrDocsToPostgresPipeline'
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'edu.mcw.rgd.pipeline.solr.SolrDocsToPostgresPipeline'
+        )
+    }
+
+    // Create fat JAR
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.register('runPipeline', JavaExec) {
+    group = 'application'
+    description = 'Run the Solr Docs to Postgres Pipeline'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'edu.mcw.rgd.pipeline.solr.SolrDocsToPostgresPipeline'
+}
+task update_rgdcore(type:Copy){
+    from file("../../rgd-core-library/dist/rgdcore_1.1.3.jar")
+    into file("lib/")
+}
