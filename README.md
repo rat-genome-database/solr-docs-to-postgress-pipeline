@@ -83,11 +83,11 @@ gradle runPipeline --args="-i /data/solr-docs -b 1000 -t 10"
 
 The pipeline uses the RGD core library's database configuration. Ensure your database connection is properly configured in your environment.
 
-### Log4j Configuration
+### Log4j2 Configuration
 
-Logging is configured via `config/log4j.properties`. Logs are written to:
+Logging is configured via `config/log4j2.xml`. Logs are written to:
 - Console (stdout)
-- File: `logs/solr-docs-pipeline.log` (rolling, max 10MB per file, 10 backup files)
+- File: `logs/solr-docs-pipeline.log` (rolling, max 10MB per file, 10 backup files with compression)
 
 ## Input Format
 
@@ -148,9 +148,9 @@ solr-docs-to-postgress-pipeline/
 
 - RGD Core Library (4.0.0)
 - Jackson (2.15.2) - JSON processing
-- PostgreSQL JDBC Driver (42.6.0)
+- PostgreSQL JDBC Driver (42.7.7)
 - Apache Commons CLI (1.5.0)
-- Log4j (1.2.17)
+- Log4j2 (2.20.0)
 
 ## Error Handling
 

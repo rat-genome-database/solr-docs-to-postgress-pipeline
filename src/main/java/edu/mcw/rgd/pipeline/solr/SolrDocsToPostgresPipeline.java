@@ -9,11 +9,10 @@ import edu.mcw.rgd.datamodel.solr.SolrDoc;
 import edu.mcw.rgd.process.MyThreadPoolExecutor;
 import edu.mcw.rgd.process.SolrDBProcessingThread;
 import org.apache.commons.cli.*;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,7 +28,7 @@ import java.util.stream.Collectors;
  */
 public class SolrDocsToPostgresPipeline {
 
-    private static final Logger logger = Logger.getLogger(SolrDocsToPostgresPipeline.class);
+    private static final Logger logger = LogManager.getLogger(SolrDocsToPostgresPipeline.class);
     private static final int DEFAULT_BATCH_SIZE = 1000;
     private static final int DEFAULT_THREAD_POOL_SIZE = 10;
     private static final int DEFAULT_TIMEOUT_MINUTES = 30;
@@ -42,8 +41,7 @@ public class SolrDocsToPostgresPipeline {
 
     public static void main(String[] args) {
         try {
-            // Configure logging
-            PropertyConfigurator.configure("config/log4j.properties");
+            // Log4j2 configuration is automatically loaded from config/log4j2.xml
 
             // Parse command line arguments
             SolrDocsToPostgresPipeline pipeline = new SolrDocsToPostgresPipeline();
@@ -330,7 +328,7 @@ public class SolrDocsToPostgresPipeline {
         private int processedDocs = 0;
         private int skippedDocs = 0;
         private int errors = 0;
-        private long startTime = System.currentTimeMillis();
+        private final long startTime = System.currentTimeMillis();
 
         void addBatchResult(BatchResult result) {
             totalDocs += result.totalDocs;
