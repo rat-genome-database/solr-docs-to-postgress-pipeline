@@ -2,10 +2,6 @@
 
 This pipeline extracts Solr documents from JSON files and uploads them to a PostgreSQL database. It's optimized for high performance with batch processing and parallel execution.
 
-## Overview
-
-The pipeline is based on the `uploadToDB` method from `PubMedLibrary.java` in the pubmed-crawler2 project. It processes JSON files containing Solr documents and efficiently uploads them to the database while checking for duplicates.
-
 ## Features
 
 - **Batch Processing**: Processes documents in configurable batches (default: 1000)
@@ -17,7 +13,7 @@ The pipeline is based on the `uploadToDB` method from `PubMedLibrary.java` in th
 
 ## Prerequisites
 
-- Java 11 or higher
+- Java 17
 - PostgreSQL database with RGD schema
 - Access to RGD core library (edu.mcw.rgd:rgd-core-library)
 
@@ -146,7 +142,7 @@ solr-docs-to-postgress-pipeline/
 
 ## Dependencies
 
-- RGD Core Library (4.0.0)
+- RGD Core Library
 - Jackson (2.15.2) - JSON processing
 - PostgreSQL JDBC Driver (42.7.7)
 - Apache Commons CLI (1.5.0)
@@ -157,10 +153,6 @@ solr-docs-to-postgress-pipeline/
 - Malformed JSON lines are logged and skipped
 - Database errors are logged with full stack traces
 - Uncaught thread exceptions trigger graceful shutdown
-
-## License
-
-Copyright (c) Medical College of Wisconsin
 
 ## Contact
 
