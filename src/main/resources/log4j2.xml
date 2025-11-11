@@ -20,7 +20,7 @@
 
     <Loggers>
         <!-- RGD Pipeline Loggers -->
-        <Logger name="edu.mcw.rgd.pipeline" level="info" additivity="false">
+        <Logger name="edu.mcw.rgd.pipeline.solr.SolrDocsToPostgresPipeline" level="info" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="RollingFile"/>
         </Logger>

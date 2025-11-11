@@ -41,7 +41,6 @@ public class SolrDocsToPostgresPipeline {
 
     public static void main(String[] args) {
         try {
-            // Log4j2 configuration is automatically loaded from config/log4j2.xml
 
             // Parse command line arguments
             SolrDocsToPostgresPipeline pipeline = new SolrDocsToPostgresPipeline();
@@ -303,6 +302,9 @@ public class SolrDocsToPostgresPipeline {
 
         // Submit non-existing documents for processing
         if (!newDocs.isEmpty()) {
+            for(SolrDoc d:newDocs){
+                result.newPmids.add(d.getPmid().get(0));
+            }
             Runnable workerThread = new SolrDBProcessingThread(newDocs, chunkDataCounts);
             executor.execute(workerThread);
         }
@@ -317,6 +319,7 @@ public class SolrDocsToPostgresPipeline {
         int totalDocs = 0;
         int processedDocs = 0;
         int skippedDocs = 0;
+        Set<String> newPmids=new HashSet<>();
     }
 
     /**
@@ -328,12 +331,14 @@ public class SolrDocsToPostgresPipeline {
         private int processedDocs = 0;
         private int skippedDocs = 0;
         private int errors = 0;
+        private Set<String> newPmids=new HashSet<>();
         private final long startTime = System.currentTimeMillis();
 
         void addBatchResult(BatchResult result) {
             totalDocs += result.totalDocs;
             processedDocs += result.processedDocs;
             skippedDocs += result.skippedDocs;
+            newPmids.addAll(result.newPmids);
         }
 
         void incrementFilesProcessed() {
@@ -363,6 +368,8 @@ public class SolrDocsToPostgresPipeline {
             }
 
             logger.info("========================================");
+            logger.info("New PMIDs Uploaded ..."+ newPmids.size());
+            logger.info("New PMIDs List:"+ newPmids.toString());
         }
     }
 }
