@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
+import com.google.gson.Gson;
 import edu.mcw.rgd.dao.impl.solr.SolrDocsDAO;
 import edu.mcw.rgd.datamodel.solr.SolrDoc;
 import edu.mcw.rgd.process.MyThreadPoolExecutor;
 import edu.mcw.rgd.process.SolrDBProcessingThread;
+import edu.mcw.rgd.process.SolrDBUpdateThread;
 import org.apache.commons.cli.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -179,7 +181,7 @@ public class SolrDocsToPostgresPipeline {
             solrDocsDAO = new SolrDocsDAO();
 
             PipelineStatistics stats = new PipelineStatistics();
-
+            Gson gson=new Gson();
             for (File fileEntry : files) {
                 if (fileEntry == null || !fileEntry.isFile()) {
                     continue;
@@ -196,6 +198,7 @@ public class SolrDocsToPostgresPipeline {
                             linesRead++;
                             try {
                                 SolrDoc doc = mapper.readValue(strCurrentLine, SolrDoc.class);
+                                System.out.println(gson.toJson(doc));
                                 solrDocs.add(doc);
 
                                 // Process in batches
@@ -213,6 +216,7 @@ public class SolrDocsToPostgresPipeline {
                                 logger.error(String.format("Error parsing line %d in file %s", linesRead, fileEntry.getName()), e);
                                 stats.incrementErrors();
                             }
+                          //  break;
                         }
 
                         // Process remaining documents
@@ -290,6 +294,7 @@ public class SolrDocsToPostgresPipeline {
 
         // Batch check for existing documents
         Set<String> existingPmids = solrDocsDAO.getExistingPmids(pmids);
+        
 
         // Filter out existing documents
         List<SolrDoc> newDocs = batch.stream()
@@ -298,9 +303,8 @@ public class SolrDocsToPostgresPipeline {
                 .collect(Collectors.toList());
 
         result.processedDocs = newDocs.size();
-        result.skippedDocs = batch.size() - newDocs.size();
 
-        // Submit non-existing documents for processing
+        // Submit non-existing documents for processing (insert)
         if (!newDocs.isEmpty()) {
             for(SolrDoc d:newDocs){
                 result.newPmids.add(d.getPmid().get(0));
@@ -308,6 +312,24 @@ public class SolrDocsToPostgresPipeline {
             Runnable workerThread = new SolrDBProcessingThread(newDocs, chunkDataCounts);
             executor.execute(workerThread);
         }
+
+        // Process existing documents for update
+        List<SolrDoc> existingDocs = batch.stream()
+                .filter(doc -> doc.getPmid() != null && !doc.getPmid().isEmpty()
+                        && existingPmids.contains(doc.getPmid().get(0)))
+                .collect(Collectors.toList());
+
+        if (!existingDocs.isEmpty()) {
+            for (SolrDoc d : existingDocs) {
+                result.updatedPmids.add(d.getPmid().get(0));
+            }
+            result.updatedDocs = existingDocs.size();
+            Runnable updateThread = new SolrDBUpdateThread(existingDocs, chunkDataCounts);
+            executor.execute(updateThread);
+        }
+
+        // Documents without PMIDs are skipped
+        result.skippedDocs = batch.size() - newDocs.size() - existingDocs.size();
 
         return result;
     }
@@ -319,7 +341,9 @@ public class SolrDocsToPostgresPipeline {
         int totalDocs = 0;
         int processedDocs = 0;
         int skippedDocs = 0;
-        Set<String> newPmids=new HashSet<>();
+        int updatedDocs = 0;
+        Set<String> newPmids = new HashSet<>();
+        Set<String> updatedPmids = new HashSet<>();
     }
 
     /**
@@ -329,16 +353,20 @@ public class SolrDocsToPostgresPipeline {
         private int filesProcessed = 0;
         private int totalDocs = 0;
         private int processedDocs = 0;
+        private int updatedDocs = 0;
         private int skippedDocs = 0;
         private int errors = 0;
-        private Set<String> newPmids=new HashSet<>();
+        private Set<String> newPmids = new HashSet<>();
+        private Set<String> updatedPmids = new HashSet<>();
         private final long startTime = System.currentTimeMillis();
 
         void addBatchResult(BatchResult result) {
             totalDocs += result.totalDocs;
             processedDocs += result.processedDocs;
+            updatedDocs += result.updatedDocs;
             skippedDocs += result.skippedDocs;
             newPmids.addAll(result.newPmids);
+            updatedPmids.addAll(result.updatedPmids);
         }
 
         void incrementFilesProcessed() {
@@ -358,8 +386,9 @@ public class SolrDocsToPostgresPipeline {
             logger.info("========================================");
             logger.info(String.format("Files processed:        %d", filesProcessed));
             logger.info(String.format("Total documents:        %d", totalDocs));
-            logger.info(String.format("Processed (new):        %d", processedDocs));
-            logger.info(String.format("Skipped (existing):     %d", skippedDocs));
+            logger.info(String.format("Inserted (new):         %d", processedDocs));
+            logger.info(String.format("Updated (existing):     %d", updatedDocs));
+            logger.info(String.format("Skipped (no PMID):      %d", skippedDocs));
             logger.info(String.format("Errors:                 %d", errors));
             logger.info(String.format("Processing time:        %.2f seconds", seconds));
 
@@ -368,8 +397,11 @@ public class SolrDocsToPostgresPipeline {
             }
 
             logger.info("========================================");
-            logger.info("New PMIDs Uploaded ..."+ newPmids.size());
-            logger.info("New PMIDs List:"+ newPmids.toString());
+            logger.info("New PMIDs Inserted: " + newPmids.size());
+            logger.info("New PMIDs List: " + newPmids.toString());
+            logger.info("========================================");
+            logger.info("Existing PMIDs Updated: " + updatedPmids.size());
+            logger.info("Updated PMIDs List: " + updatedPmids.toString());
         }
     }
 }
