@@ -198,7 +198,7 @@ public class SolrDocsToPostgresPipeline {
                             linesRead++;
                             try {
                                 SolrDoc doc = mapper.readValue(strCurrentLine, SolrDoc.class);
-                                System.out.println(gson.toJson(doc));
+                                //System.out.println(gson.toJson(doc));
                                 solrDocs.add(doc);
 
                                 // Process in batches

@@ -23,9 +23,9 @@ public class SolrDBUpdateThread implements Runnable {
         SolrDocsDAO solrDocsDAO = new SolrDocsDAO();
         try {
             System.out.println("Updating existing SolrDocs count: " + solrDocs.size());
-            for (SolrDoc doc : solrDocs) {
-                System.out.println("Updating PMID: " + doc.getPmid());
-            }
+//            for (SolrDoc doc : solrDocs) {
+//                System.out.println("Updating PMID: " + doc.getPmid());
+//            }
             int updatedCount = solrDocsDAO.updateBatch(solrDocs);
             chunkDataCounts.add(updatedCount);
         } catch (Exception e) {
