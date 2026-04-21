@@ -3,7 +3,10 @@ package edu.mcw.rgd.pipeline.solr;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.cfg.CoercionAction;
+import com.fasterxml.jackson.databind.cfg.CoercionInputShape;
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
+import com.fasterxml.jackson.databind.type.LogicalType;
 import com.google.gson.Gson;
 import edu.mcw.rgd.dao.impl.solr.SolrDocsDAO;
 import edu.mcw.rgd.datamodel.solr.SolrDoc;
@@ -267,6 +270,9 @@ public class SolrDocsToPostgresPipeline {
     private ObjectMapper configureObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        mapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+        mapper.coercionConfigFor(LogicalType.Collection)
+                .setCoercion(CoercionInputShape.EmptyString, CoercionAction.AsNull);
         mapper.setVisibility(VisibilityChecker.Std.defaultInstance()
                 .withFieldVisibility(JsonAutoDetect.Visibility.ANY));
         return mapper;
