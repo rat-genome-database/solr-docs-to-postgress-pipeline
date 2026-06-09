@@ -295,7 +295,7 @@ public class SolrDocsToPostgresPipeline {
         // Extract PMIDs for batch existence check
         List<String> pmids = batch.stream()
                 .filter(doc -> doc.getPmid() != null && !doc.getPmid().isEmpty())
-                .map(doc -> doc.getPmid().get(0))
+                .map(doc -> doc.getPmid().get(0).trim())
                 .collect(Collectors.toList());
 
         // Batch check for existing documents
@@ -305,7 +305,7 @@ public class SolrDocsToPostgresPipeline {
         // Filter out existing documents
         List<SolrDoc> newDocs = batch.stream()
                 .filter(doc -> doc.getPmid() != null && !doc.getPmid().isEmpty()
-                        && !existingPmids.contains(doc.getPmid().get(0)))
+                        && !existingPmids.contains(doc.getPmid().get(0).trim()))
                 .collect(Collectors.toList());
 
         result.processedDocs = newDocs.size();
@@ -319,23 +319,23 @@ public class SolrDocsToPostgresPipeline {
             executor.execute(workerThread);
         }
 
-        // Process existing documents for update
-        List<SolrDoc> existingDocs = batch.stream()
-                .filter(doc -> doc.getPmid() != null && !doc.getPmid().isEmpty()
-                        && existingPmids.contains(doc.getPmid().get(0)))
-                .collect(Collectors.toList());
-
-        if (!existingDocs.isEmpty()) {
-            for (SolrDoc d : existingDocs) {
-                result.updatedPmids.add(d.getPmid().get(0));
-            }
-            result.updatedDocs = existingDocs.size();
-            Runnable updateThread = new SolrDBUpdateThread(existingDocs, chunkDataCounts);
-            executor.execute(updateThread);
-        }
+//        // Process existing documents for update
+//        List<SolrDoc> existingDocs = batch.stream()
+//                .filter(doc -> doc.getPmid() != null && !doc.getPmid().isEmpty()
+//                        && existingPmids.contains(doc.getPmid().get(0)))
+//                .collect(Collectors.toList());
+//
+//        if (!existingDocs.isEmpty()) {
+//            for (SolrDoc d : existingDocs) {
+//                result.updatedPmids.add(d.getPmid().get(0));
+//            }
+//            result.updatedDocs = existingDocs.size();
+//            Runnable updateThread = new SolrDBUpdateThread(existingDocs, chunkDataCounts);
+//            executor.execute(updateThread);
+//        }
 
         // Documents without PMIDs are skipped
-        result.skippedDocs = batch.size() - newDocs.size() - existingDocs.size();
+//        result.skippedDocs = batch.size() - newDocs.size() - existingDocs.size();
 
         return result;
     }
